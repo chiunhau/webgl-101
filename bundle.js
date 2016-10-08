@@ -47,6 +47,7 @@
 	var vertShaderSrc = __webpack_require__(1);
 	var fragShaderSrc = __webpack_require__(2);
 	var tfm = __webpack_require__(3);
+	var geometries = __webpack_require__(4)
 	var canvas = document.getElementById('myCanvas');
 	canvas.width = document.body.clientWidth;
 	canvas.height = document.body.clientHeight;
@@ -56,24 +57,22 @@
 	var fragShader = createShader(gl, gl.FRAGMENT_SHADER, fragShaderSrc);
 	var program = createProgram(gl, vertShader, fragShader);
 	gl.useProgram(program);
-
 	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 	gl.clearColor(1, 0.90, 0.99, 1.0);
 	gl.enable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 
-
 	var params = {
 	  translateX: 0.0,
 	  translateY: 0.0,
 	  translateZ: 0.0,
-	  rotateX: -0.36,
+	  rotateX: -0.45,
 	  rotateY: 0.6,
 	  rotateZ: 0,
 	  scaleX: 1.0,
 	  scaleY: 1.0,
 	  scaleZ: 1.0,
-	  fudgeFactor: 0.5
+	  fudgeFactor: 1.0
 	}
 
 	window.onload = function() {
@@ -95,14 +94,14 @@
 	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 	gl.enableVertexAttribArray(positionAttribLocation);
 	gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(createCube(100)), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometries.cube(100)), gl.STATIC_DRAW);
 
 	var colorAttribLocation = gl.getAttribLocation(program, 'a_color');
 	var colorBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 	gl.enableVertexAttribArray(colorAttribLocation);
 	gl.vertexAttribPointer(colorAttribLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
-	gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(createCubeColors()), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(geometries.cubeColors()), gl.STATIC_DRAW);
 
 
 	var transformationUniLocation = gl.getUniformLocation(program, 'u_transformation');
@@ -127,6 +126,7 @@
 	}
 
 	// requestAnimationFrame(drawScene);
+
 	//tools
 
 	function createShader(gl, type, src) {
@@ -156,111 +156,6 @@
 	    console.log(gl.getProgramInfoLog(program));
 	    gl.deleteProgram(program);
 	  }
-	}
-
-	function createCube(l) {
-	  var u =  l / 2;
-	  return [
-	    //top
-	    -u, -u, u,
-	    u, -u, u,
-	    -u, u, u,
-	    -u, u, u,
-	    u, -u, u,
-	    u, u, u,
-
-	    //right
-	    u, -u, u,
-	    u, -u, -u,
-	    u, u, u,
-	    u, u, u,
-	    u, -u, -u,
-	    u, u, -u,
-
-	    //back
-	    u, -u, -u,
-	    -u, -u, -u,
-	    u, u, -u,
-	    u, u, -u,
-	    -u, -u, -u,
-	    -u, u, -u,
-
-	    //left
-	    -u, -u, -u,
-	    -u, -u, u,
-	    -u, u, -u,
-	    -u, u, -u,
-	    -u, -u, u,
-	    -u, u, u,
-
-	    //top
-	    -u, u, u,
-	    u, u, u,
-	    -u, u, -u,
-	    -u, u, -u,
-	    u, u, u,
-	    u, u, -u,
-
-	    //bottom
-	    -u, -u, u,
-	    -u, -u, -u,
-	    u, -u, u,
-	    u, -u, u,
-	    -u, -u, -u,
-	    u, -u, -u
-	  ];
-	}
-
-	function createCubeColors() {
-	  return [
-	    //front RED
-	    255, 0, 0,
-	    255, 0, 0,
-	    255, 0, 0,
-	    255, 0, 0,
-	    255, 0, 0,
-	    255, 0, 0,
-
-	    //right YELLOW
-	    255, 255, 0,
-	    255, 255, 0,
-	    255, 255, 0,
-	    255, 255, 0,
-	    255, 255, 0,
-	    255, 255, 0,
-
-	    //back PINK
-	    255, 0, 255,
-	    255, 0, 255,
-	    255, 0, 255,
-	    255, 0, 255,
-	    255, 0, 255,
-	    255, 0, 255,
-
-	    //left BLUE
-	    0, 0, 255,
-	    0, 0, 255,
-	    0, 0, 255,
-	    0, 0, 255,
-	    0, 0, 255,
-	    0, 0, 255,
-
-	    //top GREEN
-	    0, 255, 0,
-	    0, 255, 0,
-	    0, 255, 0,
-	    0, 255, 0,
-	    0, 255, 0,
-	    0, 255, 0,
-
-	    //bottom LIGHT BLUE
-	    0, 255, 255,
-	    0, 255, 255,
-	    0, 255, 255,
-	    0, 255, 255,
-	    0, 255, 255,
-	    0, 255, 255
-	  ];
 	}
 
 
@@ -391,6 +286,119 @@
 	}
 
 	module.exports = tfm;
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	var geometries = {
+	  cube: function(l) {
+	    var u =  l / 2;
+	    return [
+	      //top
+	      -u, -u, u,
+	      u, -u, u,
+	      -u, u, u,
+	      -u, u, u,
+	      u, -u, u,
+	      u, u, u,
+
+	      //right
+	      u, -u, u,
+	      u, -u, -u,
+	      u, u, u,
+	      u, u, u,
+	      u, -u, -u,
+	      u, u, -u,
+
+	      //back
+	      u, -u, -u,
+	      -u, -u, -u,
+	      u, u, -u,
+	      u, u, -u,
+	      -u, -u, -u,
+	      -u, u, -u,
+
+	      //left
+	      -u, -u, -u,
+	      -u, -u, u,
+	      -u, u, -u,
+	      -u, u, -u,
+	      -u, -u, u,
+	      -u, u, u,
+
+	      //top
+	      -u, u, u,
+	      u, u, u,
+	      -u, u, -u,
+	      -u, u, -u,
+	      u, u, u,
+	      u, u, -u,
+
+	      //bottom
+	      -u, -u, u,
+	      -u, -u, -u,
+	      u, -u, u,
+	      u, -u, u,
+	      -u, -u, -u,
+	      u, -u, -u
+	    ];
+	  },
+	  cubeColors: function() {
+	    return [
+	      //front RED
+	      255, 0, 0,
+	      255, 0, 0,
+	      255, 0, 0,
+	      255, 0, 0,
+	      255, 0, 0,
+	      255, 0, 0,
+
+	      //right YELLOW
+	      255, 255, 0,
+	      255, 255, 0,
+	      255, 255, 0,
+	      255, 255, 0,
+	      255, 255, 0,
+	      255, 255, 0,
+
+	      //back PINK
+	      255, 0, 255,
+	      255, 0, 255,
+	      255, 0, 255,
+	      255, 0, 255,
+	      255, 0, 255,
+	      255, 0, 255,
+
+	      //left BLUE
+	      0, 0, 255,
+	      0, 0, 255,
+	      0, 0, 255,
+	      0, 0, 255,
+	      0, 0, 255,
+	      0, 0, 255,
+
+	      //top GREEN
+	      0, 255, 0,
+	      0, 255, 0,
+	      0, 255, 0,
+	      0, 255, 0,
+	      0, 255, 0,
+	      0, 255, 0,
+
+	      //bottom LIGHT BLUE
+	      0, 255, 255,
+	      0, 255, 255,
+	      0, 255, 255,
+	      0, 255, 255,
+	      0, 255, 255,
+	      0, 255, 255
+	    ];
+	  }
+	}
+
+	module.exports = geometries;
 
 
 /***/ }
