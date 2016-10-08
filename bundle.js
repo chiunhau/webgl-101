@@ -48,91 +48,85 @@
 	var fragShaderSrc = __webpack_require__(2);
 	var tfm = __webpack_require__(3);
 	var canvas = document.getElementById('myCanvas');
-
+	canvas.width = document.body.clientWidth;
+	canvas.height = document.body.clientHeight;
 	var gl = canvas.getContext('webgl');
 
 	var vertShader = createShader(gl, gl.VERTEX_SHADER, vertShaderSrc);
 	var fragShader = createShader(gl, gl.FRAGMENT_SHADER, fragShaderSrc);
 	var program = createProgram(gl, vertShader, fragShader);
-	var positionAttribLocation = gl.getAttribLocation(program, 'a_position');
-
-
-	var positionBuffer = gl.createBuffer();
-
-
 	gl.useProgram(program);
-	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
 	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-	gl.clearColor(0, 0, 0, 0);
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.clearColor(1, 0.90, 0.99, 1.0);
 	gl.enable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 
 
 	var params = {
-	  translateX: 600,
-	  translateY: 200,
-	  translateZ: 0,
-	  rotateX: 0,
-	  rotateY: 0,
+	  translateX: 0.0,
+	  translateY: 0.0,
+	  translateZ: 0.0,
+	  rotateX: -0.36,
+	  rotateY: 0.6,
 	  rotateZ: 0,
-	  scaleX: 1,
-	  scaleY: 1,
-	  scaleZ: 1,
-	  fudgeFactor: 1.0
+	  scaleX: 1.0,
+	  scaleY: 1.0,
+	  scaleZ: 1.0,
+	  fudgeFactor: 0.5
 	}
 
 	window.onload = function() {
 	  var gui = new dat.GUI();
-	  // gui.add(params, 'translateX', 0, 1000).onChange(draw);
-	  // gui.add(params, 'translateY', 0, 1000).onChange(draw);
-	  // gui.add(params, 'translateZ', 0, 400).onChange(draw);
-	  gui.add(params, 'rotateX', 0, 5).onChange(drawScene);
-	  gui.add(params, 'rotateY', 0, 5).onChange(drawScene);
-	  gui.add(params, 'rotateZ', 0, 5).onChange(drawScene);
-	  // gui.add(params, 'scaleX', 0, 5).onChange(draw);
-	  // gui.add(params, 'scaleY', 0, 5).onChange(draw);
-	  // gui.add(params, 'scaleZ', 0, 5).onChange(draw);
-	  // gui.add(params, 'fudgeFactor', 0.0, 2.0).onChange(draw);
+	  gui.add(params, 'translateX', -500, 500).onChange(drawScene);
+	  gui.add(params, 'translateY', -500, 500).onChange(drawScene);
+	  gui.add(params, 'translateZ', -400, 400).onChange(drawScene);
+	  gui.add(params, 'rotateX', -4, 4).onChange(drawScene);
+	  gui.add(params, 'rotateY', -4, 4).onChange(drawScene);
+	  gui.add(params, 'rotateZ', -4, 4).onChange(drawScene);
+	  gui.add(params, 'scaleX', 1, 5).onChange(drawScene);
+	  gui.add(params, 'scaleY', 1, 5).onChange(drawScene);
+	  gui.add(params, 'scaleZ', 1, 5).onChange(drawScene);
+	  gui.add(params, 'fudgeFactor', 0.0, 2.0).onChange(drawScene);
 	}
 
-
-
-
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(createCube(100)), gl.STATIC_DRAW);
+	var positionAttribLocation = gl.getAttribLocation(program, 'a_position');
+	var positionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 	gl.enableVertexAttribArray(positionAttribLocation);
 	gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
-
-	var transformationUniLocation = gl.getUniformLocation(program, 'u_transformation');
-
-
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(createCube(100)), gl.STATIC_DRAW);
 
 	var colorAttribLocation = gl.getAttribLocation(program, 'a_color');
 	var colorBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 	gl.enableVertexAttribArray(colorAttribLocation);
 	gl.vertexAttribPointer(colorAttribLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+	gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(createCubeColors()), gl.STATIC_DRAW);
 
 
-
-
-
+	var transformationUniLocation = gl.getUniformLocation(program, 'u_transformation');
+	var fudgeLocation = gl.getUniformLocation(program, 'u_fudgeFactor');
+	drawScene()
+	// var frameCount = 0;
 	function drawScene() {
-	  var transformationMat = tfm.multiply(tfm.rotateX(params.rotateX), tfm.rotateY(params.rotateY));
-	  console.log(transformationMat);
+
+	  gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+	  var transformationMat = tfm.multiply(tfm.scale(params.scaleX, params.scaleY, params.scaleZ), tfm.rotateX(params.rotateX));
+
+	  transformationMat = tfm.multiply(transformationMat, tfm.rotateY(params.rotateY));
 	  transformationMat = tfm.multiply(transformationMat, tfm.rotateZ(params.rotateZ));
-	  console.log(transformationMat);
-	  transformationMat = tfm.multiply(transformationMat, tfm.project(800, 600, 400));
-	  console.log(transformationMat);
-	  console.log("end");
+	  transformationMat = tfm.multiply(transformationMat, tfm.translate(params.translateX, params.translateY, params.translateZ));
+	  transformationMat = tfm.multiply(transformationMat, tfm.project(canvas.width, canvas.height, 500));
 
-
+	  gl.uniform1f(fudgeLocation, params.fudgeFactor);
 	  gl.uniformMatrix4fv(transformationUniLocation, false, transformationMat);
-	  gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(createCubeColors()), gl.STATIC_DRAW);
 	  gl.drawArrays(gl.TRIANGLES, 0, 36);
+	  // frameCount += 1;
+	  // requestAnimationFrame(drawScene);
 	}
 
-	drawScene();
+	// requestAnimationFrame(drawScene);
 	//tools
 
 	function createShader(gl, type, src) {
@@ -227,7 +221,7 @@
 	    255, 0, 0,
 	    255, 0, 0,
 
-	    //left YELLOW
+	    //right YELLOW
 	    255, 255, 0,
 	    255, 255, 0,
 	    255, 255, 0,
@@ -235,7 +229,7 @@
 	    255, 255, 0,
 	    255, 255, 0,
 
-	    //right PINK
+	    //back PINK
 	    255, 0, 255,
 	    255, 0, 255,
 	    255, 0, 255,
@@ -243,7 +237,7 @@
 	    255, 0, 255,
 	    255, 0, 255,
 
-	    //back BLUE
+	    //left BLUE
 	    0, 0, 255,
 	    0, 0, 255,
 	    0, 0, 255,
@@ -274,7 +268,7 @@
 /* 1 */
 /***/ function(module, exports) {
 
-	module.exports = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nvarying vec4 v_color;\n\nuniform mat4 u_transformation;\n\nvoid main() {\n  gl_Position = a_position * u_transformation;\n\n  v_color = a_color;\n}\n"
+	module.exports = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nvarying vec4 v_color;\n\nuniform mat4 u_transformation;\nuniform float u_fudgeFactor;\n\nvoid main() {\n  vec4 position = u_transformation * a_position;\n\n  float zToDivideBy = 1.0 - position.z * u_fudgeFactor; \n  gl_Position = vec4(position.xy / zToDivideBy, position.zw);\n\n  v_color = a_color;\n}\n"
 
 /***/ },
 /* 2 */
@@ -293,6 +287,22 @@
 	      0, 2 / h, 0, 0,
 	      0, 0, 2 / d, 0,
 	      0, 0, 0, 1
+	    ];
+	  },
+	  translate: function(tx, ty, tz) {
+	    return [
+	       1,  0,  0,  0,
+	       0,  1,  0,  0,
+	       0,  0,  1,  0,
+	       tx, ty, tz, 1
+	    ];
+	  },
+	  scale: function(sx, sy, sz) {
+	    return [
+	      sx, 0,  0,  0,
+	      0, sy,  0,  0,
+	      0,  0, sz,  0,
+	      0,  0,  0,  1,
 	    ];
 	  },
 	  rotateX: function(angleInRadians) {
@@ -323,7 +333,7 @@
 
 	    return [
 	       c, s, 0, 0,
-	      -s, c, 0, 0,
+	       -s, c, 0, 0,
 	       0, 0, 1, 0,
 	       0, 0, 0, 1,
 	    ];

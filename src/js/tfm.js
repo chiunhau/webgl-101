@@ -7,6 +7,22 @@ var tfm = {
       0, 0, 0, 1
     ];
   },
+  translate: function(tx, ty, tz) {
+    return [
+       1,  0,  0,  0,
+       0,  1,  0,  0,
+       0,  0,  1,  0,
+       tx, ty, tz, 1
+    ];
+  },
+  scale: function(sx, sy, sz) {
+    return [
+      sx, 0,  0,  0,
+      0, sy,  0,  0,
+      0,  0, sz,  0,
+      0,  0,  0,  1,
+    ];
+  },
   rotateX: function(angleInRadians) {
     var c = Math.cos(angleInRadians);
     var s = Math.sin(angleInRadians);
@@ -35,7 +51,7 @@ var tfm = {
 
     return [
        c, s, 0, 0,
-      -s, c, 0, 0,
+       -s, c, 0, 0,
        0, 0, 1, 0,
        0, 0, 0, 1,
     ];
